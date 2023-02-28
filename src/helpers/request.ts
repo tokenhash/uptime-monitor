@@ -25,6 +25,7 @@ export const curl = (
     curl.setOpt("CONNECTTIMEOUT", 10);
     curl.setOpt("TIMEOUT", 30);
     curl.setOpt("HEADER", 1);
+    curl.setOpt("k")
 
     if(site.verbose) {
       curl.setOpt("VERBOSE", true);
