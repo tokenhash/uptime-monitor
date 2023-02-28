@@ -23,12 +23,12 @@ const secrets_2 = require("./helpers/secrets");
 const summary_1 = require("./summary");
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const update = async (shouldCommit = false) => {
-    if (!(await init_check_1.shouldContinue()))
+    if (!(await (0, init_check_1.shouldContinue)()))
         return;
-    await fs_extra_1.mkdirp("history");
-    const [owner, repo] = secrets_2.getOwnerRepo();
-    const config = await config_1.getConfig();
-    const octokit = await github_1.getOctokit();
+    await (0, fs_extra_1.mkdirp)("history");
+    const [owner, repo] = (0, secrets_2.getOwnerRepo)();
+    const config = await (0, config_1.getConfig)();
+    const octokit = await (0, github_1.getOctokit)();
     let hasDelta = false;
     const _ongoingMaintenanceEvents = await octokit.issues.listForRepo({
         owner,
@@ -66,7 +66,7 @@ const update = async (shouldCommit = false) => {
                     .split(",")
                     .map((i) => i.trim())
                     .filter((i) => i.length);
-            if (dayjs_1.default(metadata.end).isBefore(dayjs_1.default())) {
+            if ((0, dayjs_1.default)(metadata.end).isBefore((0, dayjs_1.default)())) {
                 await octokit.issues.unlock({
                     owner,
                     repo,
@@ -98,11 +98,11 @@ const update = async (shouldCommit = false) => {
             console.log(`Waiting for ${config.delay}ms`);
             await delay(config.delay);
         }
-        const slug = site.slug || slugify_1.default(site.name);
+        const slug = site.slug || (0, slugify_1.default)(site.name);
         let currentStatus = "unknown";
         let startTime = new Date();
         try {
-            const siteHistory = js_yaml_1.load((await fs_extra_1.readFile(path_1.join(".", "history", `${slug}.yml`), "utf8"))
+            const siteHistory = (0, js_yaml_1.load)((await (0, fs_extra_1.readFile)((0, path_1.join)(".", "history", `${slug}.yml`), "utf8"))
                 .split("\n")
                 .map((line) => (line.startsWith("- ") ? line.replace("- ", "") : line))
                 .join("\n"));
@@ -119,10 +119,10 @@ const update = async (shouldCommit = false) => {
                 console.log("Using tcp-ping instead of curl");
                 try {
                     let status = "up";
-                    const tcpResult = await ping_1.ping({
-                        address: environment_1.replaceEnvironmentVariables(site.url),
+                    const tcpResult = await (0, ping_1.ping)({
+                        address: (0, environment_1.replaceEnvironmentVariables)(site.url),
                         attempts: 5,
-                        port: Number(environment_1.replaceEnvironmentVariables(site.port ? String(site.port) : "")),
+                        port: Number((0, environment_1.replaceEnvironmentVariables)(site.port ? String(site.port) : "")),
                     });
                     if (tcpResult.results.every(result => Object.prototype.toString.call(result.err) === "[object Error]"))
                         throw Error('all attempts failed');
@@ -149,7 +149,7 @@ const update = async (shouldCommit = false) => {
                 //   promise to await:
                 const connect = () => {
                     return new Promise(function (resolve, reject) {
-                        const ws = new ws_1.default(environment_1.replaceEnvironmentVariables(site.url));
+                        const ws = new ws_1.default((0, environment_1.replaceEnvironmentVariables)(site.url));
                         ws.on('open', function open() {
                             if (site.body) {
                                 ws.send(site.body);
@@ -196,7 +196,7 @@ const update = async (shouldCommit = false) => {
                 }
             }
             else {
-                const result = await request_1.curl(site);
+                const result = await (0, request_1.curl)(site);
                 console.log("Result from test", result.httpCode, result.totalTime);
                 const responseTime = (result.totalTime * 1000).toFixed(0);
                 const expectedStatusCodes = (site.expectedStatusCodes || [
@@ -267,7 +267,7 @@ const update = async (shouldCommit = false) => {
         }
         try {
             if (shouldCommit || currentStatus !== status) {
-                await fs_extra_1.writeFile(path_1.join(".", "history", `${slug}.yml`), `url: ${site.url}
+                await (0, fs_extra_1.writeFile)((0, path_1.join)(".", "history", `${slug}.yml`), `url: ${site.url}
 status: ${status}
 code: ${result.httpCode}
 responseTime: ${responseTime}
@@ -275,7 +275,7 @@ lastUpdated: ${new Date().toISOString()}
 startTime: ${startTime}
 generator: Upptime <https://github.com/upptime/upptime>
 `);
-                git_1.commit(((config.commitMessages || {}).statusChange ||
+                (0, git_1.commit)(((config.commitMessages || {}).statusChange ||
                     "$PREFIX $SITE_NAME is $STATUS ($RESPONSE_CODE in $RESPONSE_TIME ms) [skip ci] [upptime]")
                     .replace("$PREFIX", status === "up"
                     ? config.commitPrefixStatusUp || "🟩"
@@ -288,7 +288,7 @@ generator: Upptime <https://github.com/upptime/upptime>
                     .replace("$STATUS", status)
                     .replace("$RESPONSE_CODE", result.httpCode.toString())
                     .replace("$RESPONSE_TIME", responseTime), (config.commitMessages || {}).commitAuthorName, (config.commitMessages || {}).commitAuthorEmail);
-                const lastCommitSha = git_1.lastCommit();
+                const lastCommitSha = (0, git_1.lastCommit)();
                 if (currentStatus !== status) {
                     console.log("Status is different", currentStatus, "to", status);
                     hasDelta = true;
@@ -339,13 +339,13 @@ generator: Upptime <https://github.com/upptime/upptime>
                             });
                             console.log("Opened and locked a new issue");
                             try {
-                                const downmsg = await secrets_1.getSecret("NOTIFICATIONS_DOWN_MESSAGE") ? (secrets_1.getSecret("NOTIFICATIONS_DOWN_MESSAGE") || "")
+                                const downmsg = await (0, secrets_1.getSecret)("NOTIFICATIONS_DOWN_MESSAGE") ? ((0, secrets_1.getSecret)("NOTIFICATIONS_DOWN_MESSAGE") || "")
                                     .replace("$SITE_NAME", site.name)
                                     .replace("$SITE_URL", `(${site.url})`)
                                     .replace("$ISSUE_URL", `${newIssue.data.html_url}`)
                                     .replace("$RESPONSE_CODE", result.httpCode.toString())
                                     : `$EMOJI ${site.name} (${site.url}) is $STATUS : ${newIssue.data.html_url}`;
-                                await notifme_1.sendNotification(status === "down"
+                                await (0, notifme_1.sendNotification)(status === "down"
                                     ? `${downmsg.replace("$STATUS", "**down**").replace("$EMOJI", `${config.commitPrefixStatusDown || "🟥"}`)}`
                                     : `${downmsg.replace("$STATUS", "experiencing **degrading performance**").replace("$EMOJI", `${config.commitPrefixStatusDegraded || "🟥"}`)}`);
                             }
@@ -386,11 +386,11 @@ generator: Upptime <https://github.com/upptime/upptime>
                         });
                         console.log("Closed issue");
                         try {
-                            const upmsg = await secrets_1.getSecret("NOTIFICATIONS_UP_MESSAGE") ? (secrets_1.getSecret("NOTIFICATIONS_UP_MESSAGE") || "")
+                            const upmsg = await (0, secrets_1.getSecret)("NOTIFICATIONS_UP_MESSAGE") ? ((0, secrets_1.getSecret)("NOTIFICATIONS_UP_MESSAGE") || "")
                                 .replace("$SITE_NAME", site.name)
                                 .replace("$SITE_URL", `(${site.url})`)
                                 : `$EMOJI ${site.name} (${site.url}) $STATUS`;
-                            await notifme_1.sendNotification(upmsg.replace("$EMOJI", `${config.commitPrefixStatusUp || "🟩"}`).replace("$STATUS", `${issues.data[0].title.includes("degraded")
+                            await (0, notifme_1.sendNotification)(upmsg.replace("$EMOJI", `${config.commitPrefixStatusUp || "🟩"}`).replace("$STATUS", `${issues.data[0].title.includes("degraded")
                                 ? "performance has improved"
                                 : "is back up"}`));
                         }
@@ -414,9 +414,9 @@ generator: Upptime <https://github.com/upptime/upptime>
             console.log("ERROR", error);
         }
     }
-    git_1.push();
+    (0, git_1.push)();
     if (hasDelta)
-        summary_1.generateSummary();
+        (0, summary_1.generateSummary)();
 };
 exports.update = update;
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
